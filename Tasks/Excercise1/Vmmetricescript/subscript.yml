@@ -1,0 +1,70 @@
+ 
+  - name: Vm disk write operations for last 10 minutes
+    shell:  az vm monitor metrics tail --name {{ item }} -g {{ resourcegp }} --metrics "Disk Write Operations/Sec"  --offset 10m --output table
+    register: diskwrite
+
+  - name: Getting VM DISK write operations
+    vars: 
+      msg: |
+          Vmname: {{ item }}
+          Disk ussage: {{ diskwrite.stdout }}
+    debug: 
+      msg: "{{ msg.split('\n') }}" 
+
+  - name: Vm disk read Operations for last 10 minutes
+    shell: az vm monitor metrics tail --name {{ item }} -g {{ resourcegp }} --metrics "Disk read Operations/Sec"  --offset 10m --output table
+    register: diskread
+
+  - name: Getting VM DISK read operations
+    vars: 
+      msg: |
+          Vmname: {{ item }}
+          Disk ussage: {{ diskread.stdout }}
+    debug: 
+      msg: "{{ msg.split('\n') }}"
+
+
+  - name: CPU Operations for last 10 minutes
+    shell: az vm monitor metrics tail --name {{ item }} -g {{ resourcegp }} --metrics "Percentage CPU"  --offset 10m --output table
+    register: cpu
+
+  - name: Getting VM CPU ussage
+    vars: 
+      msg: |
+          Vmname: {{ item }}
+          CPU ussage: {{ cpu.stdout }}
+    debug: 
+      msg: "{{ msg.split('\n') }}"
+
+
+  - name: Network inflow ussage As of now
+    shell: az vm monitor metrics tail --name {{ item }} -g {{ resourcegp }} --metrics "Network in Total"  --offset 1m --output table
+    register: netin
+
+  - name: Getting VM total net in
+    vars: 
+      msg: |
+          Vmname: {{ item }}
+          net in total: {{ netin.stdout }}
+
+
+    debug: 
+      msg: "{{ msg.split('\n') }}"
+
+
+
+
+  - name: Network out flow as of now
+    shell: az vm monitor metrics tail --name {{ item }} -g {{ resourcegp }} --metrics "Network out Total"  --offset 1m --output table
+    register: netout
+
+  - name: Getting VM total net out
+    vars: 
+      msg:
+           |  
+          Vmname: {{ item }}
+          net out total: {{ netout.stdout }}
+
+
+    debug: 
+      msg: "{{ msg.split('\n') }}"

@@ -1,0 +1,46 @@
+1. TROUBLESHOOTING STEPS:
+
+I logged in the machine and tried to start the redis server and it failed to start. I run journalctl -xe to get any information about the exit status. The below code in the journalctl -xe was intresting as it returnd an error which leads to the some important information.
+
+
+
+Sep 19 02:02:33 syamrag-lnx redis-server[5870]: >>> 'logfile /var/log/redis-server.log'
+Sep 19 02:02:33 syamrag-lnx redis-server[5870]: Can't open the log file: Read-only file system
+Sep 19 02:02:33 syamrag-lnx systemd[1]: redis-server.service: Control process exited, code=exited status=1
+Sep 19 02:02:33 syamrag-lnx systemd[1]: Failed to start Advanced key-value store.
+
+
+As per the error the redis log file is "/var/log/redis-server.log" and the redis service is unable to open the file for writing. I went ahead and checked the service file for redis ( /etc/systemd/system/redis.service ) and checked the read write directories. As per the defintions in service file redis has read and write permission in /var/log and /var/log/redis folder
+
+I run the below command to see if redis user is able to access the configuration file as specified in the /etc/redis/redis.conf 
+
+sudo -u redis redis-server /etc/redis/redis.conf
+
+The above command thrown a permission denied error for  "/var/log/redis-server.log" file. So I decided to check the permission of the files in /var/log directory. I found that only root has read and write permission in /var/log/redis-server.log file and also found a folder named "redis" owned by redis user. I checked the contents with in the redis folder and found a redis-server.log file. I also checked the permission of the file and it appeared as the redis user has full permission on the directory and read write permission on the log file. 
+
+So I edited the redis config file and changed the log file location from  /var/log/redis-server.log to logfile /var/log/redis/redis-serve.log 
+
+Run the below command again to see everything is ok and it doesn't retunred any error.
+
+sudo -u redis redis-server /etc/redis/redis.conf 
+
+I restarted the redis again and it thrown port 6379 was already in use. Killed the port using below command 
+
+sudo fuser -k 6379/tcp
+
+Run the below command to start the redis-server. 
+
+sudo service redis-server start
+
+
+Checked the status once again and tried connecting to redis server via redis cli and it worked.
+
+
+2. WHAT WENT WRONG
+
+The redis user was unable to open the log file for writing the logs due to improper permissions. The redis user needs write permission on log file to write the logs.
+
+
+3.HOW DID I SOLVED THE ISSUE
+
+I changed the log file location in the redis config file from  "/var/log/redis-server.log" to "/var/log/redis/redis-serve.log" which is owned by redis user and redis has full permission on the directoy and read and write permission on the log file.

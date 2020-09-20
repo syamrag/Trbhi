@@ -1,0 +1,11 @@
+- hosts: localhost
+  connection: local
+  vars: 
+    resourcegp: mynewRG
+  tasks:
+
+    - name: Include task list in play
+      include_tasks: subscript.yml
+      with_items:
+        - vm1
+        - vm2

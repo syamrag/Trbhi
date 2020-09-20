@@ -1,0 +1,39 @@
+
+
+TROUBLESHOOTING STEPS:
+
+I logged in the Windows server and clicked on IIS on the server manager page and checked the events
+
+
+Found the below errors
+
+a) Application pool DefaultAppPool has been disabled. Windows Process Activation Service (WAS) encountered a failure when it started a worker process to serve the application pool.
+
+
+b)The identity of application pool DefaultAppPool is invalid. The user name or password that is specified for the identity may be incorrect, or the user may not have batch logon rights. If the identity is not corrected, the application pool will be disabled when the application pool receives its first request.  If batch logon rights are causing the problem, the identity in the IIS configuration store must be changed after rights have been granted before Windows Process Activation Service (WAS) can retry the logon. If the identity remains invalid after the first request for the application pool is processed, the application pool will be disabled. The data field contains the error number.
+
+
+
+Cheked the application identity by going to default app pool and clicked on the Adanced option. The App pool identity was set to "ApplicationPooluser", my step was to check whether it's running with a right identity
+
+
+checked users and groupds and found  AppPoolServiceUser. So the user is there. next I checked whether the user has "log on as batch job" access was enabled. I checked the user access by following the below steps:
+
+
+1. Typed in secpol.msc /s in the "RUN" option.
+2. Selected "Local Policies" in MSC snap in
+3. Selected "User Rights Assignment"
+4. Right clicked on "Log on as batch job" and select Properties
+
+
+It appeard as the "ApplicationPooluser" has not given the permission for the log on as batch job. To solve the issue there are two options. Either set the default pool identity to built in account which is the recommanded method or the add the user to the Log on as batch job in the user Rights Assignment. I went back and added the default pool identity to the built in account and restarted the default the pool and it worked.
+
+
+WHAT WENT WRONG:
+
+
+Default pool identity was set to a custom user and the log on as batch job access was not given to the custom user which resulted in the application pool to get stopped when the application pool receives its first request.
+
+How Did I Solved The Issue:
+
+I changed the the Application pool identity to the built in account (Applicationpool) which is the recommanded one and restarted the application pool and this seems to have resolved the issue.

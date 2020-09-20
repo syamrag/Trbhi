@@ -1,0 +1,105 @@
+- name: Create Azure VM
+  hosts: localhost
+  connection: local
+  vars: 
+    vm:
+      - name: vm1
+        size: "Standard_D4s_v3"
+        offer: "UbuntuServer"
+        publisher: "Canonical"
+        sku_name: "16.04-LTS"
+        sku_version: "latest"
+        os_type: Linux
+        managed_disk_type: Standard_LRS
+        os_disk_size_gb: 150
+        vm_username: "vmuser1"
+        vm_password:  "Syam.123"
+
+      - name: vm2
+        size: "Standard_D4s_v3"
+        offer: "UbuntuServer"
+        publisher: "Canonical"
+        sku_name: "16.04-LTS"
+        sku_version: "latest"
+        os_type: Linux
+        managed_disk_type: Premium_LRS
+        os_disk_size_gb: 200
+        vm_username: "vmuser2"
+        vm_password:  "Syam.123"
+
+    myresourcegp: "mynewRG"
+    addressspace: "10.0.1.0/24"
+
+  vars_prompt:
+    - name: "resglocation"
+      prompt: "Choose region to deploy VMs"
+      private: no
+      default: "southeastasia"
+
+
+  tasks:
+  - name: Create resource group
+    azure_rm_resourcegroup:
+      name: "{{ myresourcegp }}"
+      location: "{{ resglocation }}"
+      state: present
+
+  - name: Create virtual network
+    azure_rm_virtualnetwork:
+      resource_group: "{{ myresourcegp }}"
+      name: "{{ myresourcegp }}_Vnet"
+      address_prefixes: "10.0.0.0/16"
+      state: present
+
+  - name: Add subnet
+    azure_rm_subnet:
+      resource_group: "{{ myresourcegp }}"
+      name: "{{ myresourcegp }}_subnet"
+      address_prefix: "{{ addressspace }}"
+      virtual_network: "{{ myresourcegp }}_Vnet"
+      state: present
+
+  - name: Create Network Security Group that allows SSH
+    azure_rm_securitygroup:
+      resource_group: "{{ myresourcegp }}"
+      name: "{{ myresourcegp }}_NSG"
+      state: present
+      rules:
+        - name: SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 1001
+          direction: Inbound
+
+  - name: Create virtual network interface card
+    azure_rm_networkinterface:
+      resource_group: "{{ myresourcegp }}"
+      name: "{{ item.name }}_netinterface"
+      virtual_network: "{{ myresourcegp }}_Vnet"
+      subnet: "{{ myresourcegp }}_subnet"
+      security_group: "{{ myresourcegp }}_NSG"
+      state: present
+    with_items: "{{ vm }}"
+
+
+  - name: Virtual Machine (VM) Creation started
+    azure_rm_virtualmachine:
+      name: "{{ item.name }}"
+      location: "{{ resglocation }}"
+      resource_group: "{{ myresourcegp }}"
+      vm_size: "{{ item.size }}"
+      network_interfaces: "{{ item.name }}_netinterface"
+      admin_username: "{{ item.vm_username }}"
+      admin_password: "{{ item.vm_password }}"
+      os_type: "{{ item.os_type }}"
+      os_disk_size_gb: "{{ item.os_disk_size_gb }}"
+      managed_disk_type: "{{ item.managed_disk_type }}"
+      image:
+        offer: "{{ item.offer }}"
+        publisher: "{{ item.publisher }}"
+        sku: "{{ item.sku_name }}"
+        version: "{{ item.sku_version}}"
+    loop:
+      "{{ vm }}"
+
