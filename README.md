@@ -25,7 +25,7 @@ This folder contains two subfolders.
 
 Bashscript
 
-This folder contains the bash script to install Docker on an empty Ubuntu system and pulls the Elastic search container and starts it using a volume to persist the data. This script waits for 45 seconds after running docker run command to make sure that docker container is up. After 45 seconds the script will check for the health status of the Elastic search container using CURL command. The CURL command will be retried up 5 times until untill a non zero exit code occurs.
+This folder contains the bash script to install Docker on an empty Ubuntu system and pulls the Elastic search container and starts it using a volume to persist the data. This script waits for 45 seconds after running docker run command to make sure that docker container is up. After 45 seconds the script will check for the health status of the Elastic search container using CURL command. The CURL command will be retried up to 5 times untill a non zero exit code occurs.
 
 healthcheck-command
 
